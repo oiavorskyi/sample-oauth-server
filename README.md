@@ -1,0 +1,1 @@
+Majority of the implementation comes from the [documentation](https://docs.spring.io/spring-security-oauth2-boot/docs/current-SNAPSHOT/reference/htmlsingle/#boot-features-security-oauth2-authorization-server).
