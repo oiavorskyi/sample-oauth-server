@@ -20,7 +20,12 @@ public class WebSecurityConfig extends WebSecurityConfigurerAdapter {
 				User.withUsername("user")
 					.passwordEncoder(passwordEncoder()::encode)
 					.password("password")
-					.authorities("anything")
+					.authorities("read", "write")
+					.build(),
+				User.withUsername("readonly")
+					.passwordEncoder(passwordEncoder()::encode)
+					.password("readonly-password")
+					.authorities("read")
 					.build()
 		);
 		//@formatter:on

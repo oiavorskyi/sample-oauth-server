@@ -11,6 +11,10 @@ import org.springframework.security.oauth2.config.annotation.configurers.ClientD
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerConfigurerAdapter;
 import org.springframework.security.oauth2.config.annotation.web.configuration.AuthorizationServerEndpointsConfiguration;
 import org.springframework.security.oauth2.config.annotation.web.configurers.AuthorizationServerEndpointsConfigurer;
+import org.springframework.security.oauth2.provider.ClientDetailsService;
+import org.springframework.security.oauth2.provider.OAuth2RequestFactory;
+import org.springframework.security.oauth2.provider.endpoint.TokenEndpointAuthenticationFilter;
+import org.springframework.security.oauth2.provider.request.DefaultOAuth2RequestFactory;
 import org.springframework.security.oauth2.provider.token.TokenStore;
 import org.springframework.security.oauth2.provider.token.store.JwtAccessTokenConverter;
 import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
@@ -19,7 +23,7 @@ import org.springframework.security.oauth2.provider.token.store.JwtTokenStore;
 @Import(AuthorizationServerEndpointsConfiguration.class)
 public class JwkSetConfiguration extends AuthorizationServerConfigurerAdapter {
 
-	private AuthenticationManager authenticationManager;
+	private final AuthenticationManager authenticationManager;
 
 	public JwkSetConfiguration(AuthenticationConfiguration authenticationConfiguration) throws Exception {
 		this.authenticationManager = authenticationConfiguration.getAuthenticationManager();
@@ -30,6 +34,7 @@ public class JwkSetConfiguration extends AuthorizationServerConfigurerAdapter {
 		// @formatter:off
 		endpoints
 			.authenticationManager(this.authenticationManager)
+			.requestFactory(requestFactory(null))
 			.accessTokenConverter(accessTokenConverter(null))
 			.tokenStore(tokenStore());
 		// @formatter:on
@@ -42,9 +47,13 @@ public class JwkSetConfiguration extends AuthorizationServerConfigurerAdapter {
 				.withClient("client-a")
 					.authorizedGrantTypes("password")
 					.secret("{noop}client-a-password")
-					.scopes("read", "write");
+					.scopes("read", "write")
+					.and()
+				.withClient("client-b")
+					.authorizedGrantTypes("password")
+					.secret("{noop}client-b-password")
+					.scopes("read");
 		// @formatter:on
-
 	}
 
 	@Bean
@@ -57,6 +66,18 @@ public class JwkSetConfiguration extends AuthorizationServerConfigurerAdapter {
 		JwtAccessTokenConverter converter = new JwtAccessTokenConverter();
 		converter.setKeyPair(jwtKey);
 		return converter;
+	}
+
+	@Bean
+	public OAuth2RequestFactory requestFactory(@SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection") ClientDetailsService clientDetailsService) {
+		DefaultOAuth2RequestFactory requestFactory = new DefaultOAuth2RequestFactory(clientDetailsService);
+		requestFactory.setCheckUserScopes(true);
+		return requestFactory;
+	}
+
+	@Bean
+	public TokenEndpointAuthenticationFilter tokenEndpointAuthenticationFilter() {
+		return new TokenEndpointAuthenticationFilter(this.authenticationManager, requestFactory(null));
 	}
 
 }

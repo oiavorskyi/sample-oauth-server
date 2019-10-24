@@ -71,7 +71,7 @@ public class OAuthServerApplicationTests {
 				.with(clientACredentials())
 				.with(passwordOAuthGrantRequest(ofAUser("wrongUser", "anyPassword"))))
 				.andExpect(status().is4xxClientError())
-				.andExpect(jsonPath("$.error").value("invalid_grant"));
+				.andExpect(jsonPath("$.error").value("unauthorized"));
 		//@formatter:on
 	}
 
@@ -87,8 +87,35 @@ public class OAuthServerApplicationTests {
 		//@formatter:on
 	}
 
+	@Test
+	public void grantsTokenWithScopesAllowedToBothClientEndUser() throws Exception {
+		//@formatter:off
+		client.perform(post("/oauth/token")
+					.with(clientACredentials())
+					.with(passwordOAuthGrantRequest(ofStandardUser())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.scope").value("read write"));
+
+		client.perform(post("/oauth/token")
+					.with(clientACredentials())
+					.with(passwordOAuthGrantRequest(ofReadonlyUser())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.scope").value("read"));
+
+		client.perform(post("/oauth/token")
+					.with(clientBCredentials())
+					.with(passwordOAuthGrantRequest(ofStandardUser())))
+				.andExpect(status().isOk())
+				.andExpect(jsonPath("$.scope").value("read"));
+		//@formatter:on
+	}
+
 	private RequestPostProcessor ofStandardUser() {
 		return ofAUser("user", "password");
+	}
+
+	private RequestPostProcessor ofReadonlyUser() {
+		return ofAUser("readonly", "readonly-password");
 	}
 
 	private RequestPostProcessor ofAUser(String username, String password) {
@@ -102,6 +129,10 @@ public class OAuthServerApplicationTests {
 
 	private RequestPostProcessor clientACredentials() {
 		return httpBasic("client-a", "client-a-password");
+	}
+
+	private RequestPostProcessor clientBCredentials() {
+		return httpBasic("client-b", "client-b-password");
 	}
 
 	private RequestPostProcessor passwordOAuthGrantRequest(RequestPostProcessor credentialsPostProcessor) {

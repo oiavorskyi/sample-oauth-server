@@ -1,1 +1,3 @@
 Majority of the implementation comes from the [documentation](https://docs.spring.io/spring-security-oauth2-boot/docs/current-SNAPSHOT/reference/htmlsingle/#boot-features-security-oauth2-authorization-server).
+
+For details on how to restrict granted scopes based on the user authorities search for "Mapping User Roles to Scopes" [here](https://projects.spring.io/spring-security-oauth/docs/oauth2.html).
